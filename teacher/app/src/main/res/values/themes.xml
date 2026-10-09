@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <style name="Theme.GradesEye" parent="Theme.MaterialComponents.DayNight.NoActionBar">
+        <item name="colorPrimary">@color/navy</item>
+        <item name="colorPrimaryDark">@color/navy_dark</item>
+        <item name="android:statusBarColor">@color/navy_dark</item>
+        <item name="android:windowLightStatusBar">false</item>
+    </style>
+</resources>

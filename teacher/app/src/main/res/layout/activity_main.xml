@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  Section 1 asks for a "clear, modern navigation pane/menu at the top". The original app's
+  own page (assets/www/index.html) already renders its own top bar (#top: back button, title,
+  sync chip) inside the WebView content, in the app's navy brand color — a second native
+  Android toolbar stacked above it would just be a duplicate header. So the top-nav redesign
+  lives IN the rebuilt web app (see web_app_source), and this native layer stays edge-to-edge,
+  only adding the offline banner strip, which needs to show even before the page finishes loading.
+-->
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res/app"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    android:fitsSystemWindows="true">
+
+    <TextView
+        android:id="@+id/offlineBanner"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:background="#9a5b00"
+        android:textColor="@color/white"
+        android:text="@string/offline_banner"
+        android:gravity="center"
+        android:padding="6dp"
+        android:textSize="12sp"
+        android:visibility="gone" />
+
+    <androidx.swiperefreshlayout.widget.SwipeRefreshLayout
+        android:id="@+id/swipeRefresh"
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1">
+
+        <WebView
+            android:id="@+id/webView"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent" />
+
+    </androidx.swiperefreshlayout.widget.SwipeRefreshLayout>
+
+</LinearLayout>
