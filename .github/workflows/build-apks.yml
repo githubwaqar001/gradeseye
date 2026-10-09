@@ -10,11 +10,20 @@ name: Build GradesEye APKs
 # and build-tools) at $ANDROID_HOME, and that action has been unreliable against
 # Google's current SDK repository manifests. We just make sure the exact platform/
 # build-tools this project needs are present and licensed, then build directly.
+#
+# Results (build log + the built APK, or whatever is available on failure) are ALSO
+# pushed to a dedicated git branch per app (ci-results-<app>), in addition to the normal
+# upload-artifact step. That's because wherever this workflow is driven from, Actions
+# artifact/log downloads are served from Azure Blob Storage, which is not reachable from
+# every environment — a plain git fetch of these branches always works.
 
 on:
   push:
     branches: [ main ]
   workflow_dispatch: {}
+
+permissions:
+  contents: write
 
 jobs:
   build:
@@ -35,8 +44,6 @@ jobs:
       - name: Ensure Android SDK packages (platform 34, build-tools 34.0.0)
         run: |
           set -e
-          echo "ANDROID_HOME=$ANDROID_HOME"
-          echo "ANDROID_SDK_ROOT=$ANDROID_SDK_ROOT"
           SDKMANAGER="$(find "${ANDROID_HOME:-$ANDROID_SDK_ROOT}" -type f -name sdkmanager 2>/dev/null | sort -r | head -1)"
           if [ -z "$SDKMANAGER" ]; then
             SDKMANAGER="$(find /usr/local/lib/android/sdk /opt/android-sdk /usr/lib/android-sdk -type f -name sdkmanager 2>/dev/null | sort -r | head -1)"
@@ -52,21 +59,41 @@ jobs:
 
       - name: Build debug APK
         working-directory: ${{ matrix.app }}
-        run: gradle assembleDebug --no-daemon --stacktrace
+        run: |
+          set -o pipefail
+          gradle assembleDebug --no-daemon --stacktrace 2>&1 | tee build.log
+        continue-on-error: true
+        id: gradle_build
 
-      - name: Upload APK
-        if: success()
+      - name: Upload APK (GitHub artifact, for browser download)
+        if: steps.gradle_build.outcome == 'success'
         uses: actions/upload-artifact@v4
         with:
           name: GradesEye-${{ matrix.app }}-debug-apk
           path: ${{ matrix.app }}/app/build/outputs/apk/debug/*.apk
 
-      - name: Upload build log on failure
-        if: failure()
-        uses: actions/upload-artifact@v4
-        with:
-          name: GradesEye-${{ matrix.app }}-build-report
-          path: |
-            ${{ matrix.app }}/app/build/outputs/logs/**
-            ${{ matrix.app }}/app/build/reports/**
-          if-no-files-found: ignore
+      - name: Publish result via git branch
+        if: always()
+        run: |
+          set -e
+          PAYLOAD=/tmp/ci_payload_${{ matrix.app }}
+          rm -rf "$PAYLOAD" && mkdir -p "$PAYLOAD"
+          cp "${{ matrix.app }}/build.log" "$PAYLOAD/" 2>/dev/null || true
+          find "${{ matrix.app }}/app/build/outputs/apk" -name '*.apk' -exec cp {} "$PAYLOAD/GradesEye-${{ matrix.app }}-debug.apk" \; 2>/dev/null || true
+          mkdir -p "$PAYLOAD/reports"
+          cp -r "${{ matrix.app }}/app/build/reports/." "$PAYLOAD/reports/" 2>/dev/null || true
+          echo "${{ steps.gradle_build.outcome }}" > "$PAYLOAD/OUTCOME.txt"
+
+          BRANCH="ci-results-${{ matrix.app }}"
+          git config user.email "noreply@anthropic.com"
+          git config user.name "Claude"
+          git checkout --orphan "$BRANCH"
+          git rm -rf . >/dev/null 2>&1 || true
+          cp -r "$PAYLOAD"/. .
+          git add -A
+          git commit -m "CI result for ${{ matrix.app }} @ ${{ github.sha }}"
+          git push origin "$BRANCH" --force
+
+      - name: Fail job if build actually failed
+        if: steps.gradle_build.outcome != 'success'
+        run: exit 1
