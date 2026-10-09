@@ -4,6 +4,12 @@ name: Build GradesEye APKs
 # No local gradlew/gradle-wrapper.jar is committed — gradle/actions/setup-gradle installs
 # Gradle itself on the runner, since this project was assembled somewhere that cannot reach
 # services.gradle.org or dl.google.com to generate/vendor those files locally.
+#
+# Does NOT use android-actions/setup-android@v3 — GitHub's ubuntu-latest runner image
+# already ships a current Android SDK (cmdline-tools, platform-tools, recent platforms
+# and build-tools) at $ANDROID_HOME, and that action has been unreliable against
+# Google's current SDK repository manifests. We just make sure the exact platform/
+# build-tools this project needs are present and licensed, then build directly.
 
 on:
   push:
@@ -14,6 +20,7 @@ jobs:
   build:
     runs-on: ubuntu-latest
     strategy:
+      fail-fast: false
       matrix:
         app: [ teacher, student ]
     steps:
@@ -25,8 +32,18 @@ jobs:
           distribution: 'temurin'
           java-version: '17'
 
-      - name: Set up Android SDK
-        uses: android-actions/setup-android@v3
+      - name: Ensure Android SDK packages (platform 34, build-tools 34.0.0)
+        run: |
+          set -e
+          echo "ANDROID_HOME=$ANDROID_HOME"
+          echo "ANDROID_SDK_ROOT=$ANDROID_SDK_ROOT"
+          SDKMANAGER="$(find "${ANDROID_HOME:-$ANDROID_SDK_ROOT}" -type f -name sdkmanager 2>/dev/null | sort -r | head -1)"
+          if [ -z "$SDKMANAGER" ]; then
+            SDKMANAGER="$(find /usr/local/lib/android/sdk /opt/android-sdk /usr/lib/android-sdk -type f -name sdkmanager 2>/dev/null | sort -r | head -1)"
+          fi
+          echo "Using sdkmanager: $SDKMANAGER"
+          yes | "$SDKMANAGER" --licenses >/dev/null || true
+          "$SDKMANAGER" --install "platform-tools" "platforms;android-34" "build-tools;34.0.0"
 
       - name: Set up Gradle
         uses: gradle/actions/setup-gradle@v4
@@ -35,10 +52,21 @@ jobs:
 
       - name: Build debug APK
         working-directory: ${{ matrix.app }}
-        run: gradle assembleDebug --no-daemon
+        run: gradle assembleDebug --no-daemon --stacktrace
 
       - name: Upload APK
+        if: success()
         uses: actions/upload-artifact@v4
         with:
           name: GradesEye-${{ matrix.app }}-debug-apk
           path: ${{ matrix.app }}/app/build/outputs/apk/debug/*.apk
+
+      - name: Upload build log on failure
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: GradesEye-${{ matrix.app }}-build-report
+          path: |
+            ${{ matrix.app }}/app/build/outputs/logs/**
+            ${{ matrix.app }}/app/build/reports/**
+          if-no-files-found: ignore
