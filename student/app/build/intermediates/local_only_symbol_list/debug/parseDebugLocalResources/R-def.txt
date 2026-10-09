@@ -1,0 +1,20 @@
+R_DEF: Internal format may change without notice
+local
+color navy
+color navy_dark
+color white
+id offlineBanner
+id swipeRefresh
+id webView
+layout activity_main
+mipmap ic_launcher
+mipmap ic_launcher_round
+string app_name
+string notif_channel_announcements
+string notif_channel_announcements_desc
+string notif_channel_grades
+string notif_channel_grades_desc
+string offline_banner
+style Theme.GradesEye
+xml file_paths
+xml network_security_config
