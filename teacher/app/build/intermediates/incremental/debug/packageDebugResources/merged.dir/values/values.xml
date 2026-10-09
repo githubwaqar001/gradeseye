@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <color name="navy">#1F3864</color>
+    <color name="navy_dark">#152A4A</color>
+    <color name="white">#FFFFFF</color>
+    <string name="app_name">GradesEye</string>
+    <string name="notif_channel_announcements">Announcements</string>
+    <string name="notif_channel_announcements_desc">New class announcements from your courses</string>
+    <string name="notif_channel_grades">Grades &amp; Attendance</string>
+    <string name="notif_channel_grades_desc">Published grades, attendance and assessment updates</string>
+    <string name="notif_channel_messages">Messages</string>
+    <string name="notif_channel_messages_desc">Student messages sent to you</string>
+    <string name="offline_banner">Offline — showing your last synced data</string>
+    <style name="Theme.GradesEye" parent="Theme.MaterialComponents.DayNight.NoActionBar">
+        <item name="colorPrimary">@color/navy</item>
+        <item name="colorPrimaryDark">@color/navy_dark</item>
+        <item name="android:statusBarColor">@color/navy_dark</item>
+        <item name="android:windowLightStatusBar">false</item>
+    </style>
+</resources>

@@ -1,0 +1,44 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, viewport-fit=cover">
+<title>GradesEye</title>
+<link rel="stylesheet" href="css/styles.css">
+</head>
+<body>
+
+  <div id="top">
+    <button id="backBtn" class="hidden" aria-label="Back">&#8592;</button>
+    <button id="menuBtn" aria-label="Menu">&#9776;</button>
+    <div id="topTitle">
+      <b id="topTitleMain">GradesEye</b>
+      <small id="topTitleSub"></small>
+    </div>
+    <span id="syncChip" class="chip">Synced</span>
+  </div>
+
+  <div id="navScrim"></div>
+  <nav id="navDrawer">
+    <div class="navHeader">
+      <div class="name">GradesEye — Teacher</div>
+      <div class="sub">Classroom management</div>
+    </div>
+    <div class="navSection">
+      <div class="navItem active" data-screen="classes"><span class="ic">&#128218;</span> My Classes</div>
+      <div class="navItem" data-screen="messages"><span class="ic">&#128172;</span> Messages</div>
+    </div>
+    <div class="navSection">
+      <div class="navItem" data-screen="appsScript"><span class="ic">&#128279;</span> Gmail / Apps Script</div>
+      <div class="navItem" data-screen="profile"><span class="ic">&#128100;</span> Profile</div>
+    </div>
+  </nav>
+
+  <div id="appBody"></div>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+  <script src="js/bridge.js"></script>
+  <script src="js/backend.js"></script>
+  <script src="js/app.js"></script>
+</body>
+</html>
